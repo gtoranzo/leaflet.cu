@@ -1,0 +1,249 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Leaflet UTM</title>
+    <!-- <script src="./leaflet/1.6/require.js" data-main="app"></script>  -->
+    <!-- <script src="./app.js" data-main="app"></script>    -->
+    
+    <link rel="stylesheet" href="./leaflet/1.6/leaflet.css" />
+    <link rel="stylesheet" href="./font-awesome/css/font-awesome.min.css" />
+
+    
+    <script src="./leaflet/1.6/leaflet-src.js"></script>
+    <script src="leaflet/1.6/leaflet.js"></script>
+    <script src="./proj4js/2.4.3/proj4.js"></script>
+    <script src="L.LatLng.UTM.js"></script>    
+    <script src="leaflet/1.6/leaflet.filelayer.js"></script>
+    <script src="./dist/leaflet.wms.js"></script>
+
+    <script src="plugin/easy-button.js"></script>       
+        <script src="fullscreen/Leaflet.fullscreen.min.js"></script>
+
+    <style>
+      
+        html { font-family: Helvetica, Verdana, Arial, sans-serif; }
+        #map { width: 100%; height: 600px; margin: 1px; }
+        form { margin: 10px; }
+        .btn { margin: 10px; }
+        #center { margin: 100px; }
+        #mouseP { margin: 10px; }
+
+        .crosshairs:before, .crosshairs:after {
+          content: '';
+          position: absolute;
+          width: 32px;
+          height: 32px;
+          z-index: 999;
+          pointer-events: none;
+        }
+        .crosshairs:before {
+          bottom: 50%;
+          left: 50%;
+          transform: translate(-50%, 0);
+          border-bottom: 1px #000 solid;
+        }
+        .crosshairs:after {
+          right: 50%;
+          top: 50%;
+          transform: translate(0, -50%);
+          border-right: 1px #000 solid;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="map" class="crosshairs">
+        <div id="center"></div>
+    </div>
+
+    <div id="combo1" class="combo1 leaflet-right">
+        <form>
+            <select name="listCoord" id="listCoord">
+                <option value="default">WGS84 EPSG:4632 Coordenadas geográficas</option>
+                <option value="2085">NAD27/Cuba Norte - EPSG:2085 Planas UTM</option>
+                <option value="3795">NAD27/Cuba Norte - EPSG:3795</option>
+                <option value="2086">NAD27/Cuba Sur - EPSG:2086</option>
+                <option value="3796">NAD27/Cuba Sur - EPSG:3796</option>
+            </select>
+            <INPUT TYPE="button" class="btnCord" NAME="Boton1" VALUE="Seleccionar" onclick="selectCoordenada()">
+        </form>
+    </div>
+
+    <div id="mouseP"></div>
+
+    <form id="frm1" action="">
+      Latitude: <input type="text" name="lat" value="0" size="10">
+      Longitude: <input type="text" name="lng" value="0" size="10">
+      <span class="btn"><input type="button" onclick="toUTMBtn()" value="Convert"></span>
+      UTM: <span id="result1"></span>
+    </form>
+    <form id="frm2" action="">
+      x: <input type="text" name="x" value="" size="9">
+      y: <input type="text" name="y" value="" size="9">
+      zone: <input type="text" name="zone" value="" size="2" maxlength="2">
+      band: <input type="text" name="band" value="" size="2" maxlength="2">
+      (southHemi: <input type="text" name="southHemi" value="" size="2" maxlength="5" title="used only if band is empty">)
+      <span class="btn"><input type="button" onclick="toLatLngBtn()" value="Convert"></span>
+      <span id="result2"></span>
+    </form>
+
+    
+
+    <script type="text/javascript">
+        var el1 = document.forms.frm1.elements;
+        var el2 = document.forms.frm2.elements;
+
+        function toUTMBtn() {
+            document.getElementById('result1').innerHTML = '---';
+            var ll = L.latLng(el1.lat.value, el1.lng.value);
+            var utm = ll.utm();
+            marker.setLatLng(ll).bindPopup(utm + '<br>' + ll).openPopup()
+            el2.x.value = utm.x.toFixed(1);
+            el2.y.value = utm.y.toFixed(1);
+            el2.zone.value = utm.zone;
+            el2.band.value = utm.band;
+            el2.southHemi.value = utm.southHemi;
+            document.getElementById('result1').innerHTML = '' + utm;
+        }
+
+        function toLatLngBtn() {
+            document.getElementById('result2').innerHTML = '---';
+            var sh = el2.southHemi.value.toLowerCase();
+            var southHemi = ['true', 'y', 'yes', '1'].indexOf(sh) > -1 ? true : false;
+            var utm = L.utm(el2.x.value, el2.y.value, el2.zone.value, el2.band.value, southHemi);
+            var ll = utm.latLng();
+            if (ll) {
+                marker.setLatLng(ll).bindPopup(utm + '<br>' + ll).openPopup()
+                el1.lat.value = ll.lat.toFixed(6);
+                el1.lng.value = ll.lng.toFixed(6);
+                document.getElementById('result2').innerHTML = '' + ll;
+            }
+        }
+
+        //function createMap(div, tiled) {
+        var options = {
+            attribution: '<a href="https://idevida.geocuba.cu/"</a> &copy; GEOCUBA',
+            subdomains: 'Cuba',
+            minZoom: 0,
+            maxZoom: 20
+        };
+        // https://tile.openstreetmap.org/{z}/{x}/{y}.png
+        // https://mapas.geocuba.cu/osm_tiles/{z}/{x}/{y}.png
+        var osm = L.tileLayer('https://mapas.geocuba.cu/osm_tiles/{z}/{x}/{y}.png', options);
+        var map = L.map('map', {layers: [osm], center: [21.741642, -82.578735], zoom: 10});
+        // Agregar capas WMS a la fuente 
+        var basemaps = {
+            'OSM': osm_tiles().addTo(map),
+            'Google Cache': googlecache(),
+            'OSM Geoserver': osmGeoserver(),
+            '<span style="color: red">Blank</span>': blank()
+        };
+        /*  var source = wms.source(
+            "https://idevida.geocuba.cu/geoserver/ij/wms?",
+            {
+                "format": "image/png",
+                "transparent": "true",
+                "attribution": "<a href='https://idevida.geocuba.cu/geoserver/web/'>Geoserver</a>",
+                "info_format": "text/html",
+                "tiled": tiled
+            }
+        );
+
+        var layers = {
+            'Manzanas': source.getLayer("ij:manzanas").addTo(map),
+            'Construcciones': source.getLayer("ij:cat_construcciones").addTo(map),
+            'Subparcelas': source.getLayer("ij:cat_subparcelas").addTo(map),
+            'Curvas nivel': source.getLayer("ij:curvas_nivel").addTo(map)
+        };*/
+        // definir wms
+        // L.control.layers(basemaps, layers).addTo(map);
+        L.control.layers(basemaps).addTo(map);
+
+        function osm_tiles() {
+            var attr = 'Mapa y Datos de: <a href="https://cig.geocuba.cu/">GEOMIX</a>';
+            return L.tileLayer("https://mapas.geocuba.cu/osm_tiles/{z}/{x}/{y}.png", {
+                opacity: 1,
+                attribution: attr
+            });
+        }
+        function googlecache() {
+            var attr = 'Mapa y Datos de: <a href="https://idevida.geocuba.cu/geoserver/web/">GEOMIX</a>';
+            return L.tileLayer.wms("https://idevida.geocuba.cu/geoserver/gmx/wms?",
+                {
+                    version: "1.1.0",
+                    request: "GetMap",
+                    layers: "gmx:google",
+                    srs: "EPSG:3857",
+                    format: "image/png",
+                    transparent: false,
+                    attribution: attr
+                }
+            );
+        }
+        function osmGeoserver() {
+                var attr = 'Mapa y Datos de: <a href="https://idevida.geocuba.cu/geoserver/web/">GEOMIX</a>';
+                return L.tileLayer.wms("https://idevida.geocuba.cu/geoserver/osm/wms?", {
+                    version: "1.1.0",
+                    request: "GetMap",
+                    layers: "osm:osm",
+                    srs: "EPSG:4326",
+                    format: "image/jpeg",
+                    opacity: 1,
+                    attribution: attr
+                });
+            }
+
+        function blank() {
+            var layer = new L.Layer();
+            layer.onAdd = layer.onRemove = function() {};
+            return layer;
+        }
+
+         map.on('move', function(e) {
+                    var c = map.getCenter();
+                    document.getElementById('mouseP').innerHTML = c + '<br>UTM: ' + c.utm();
+                });
+        map.fire('move');
+
+        //L.Control.FileLayerLoad.LABEL = '<i class="fa fa-folder-open"></i>';
+        L.Control.FileLayerLoad.LABEL = '<img src="leaflet/folder.png">';
+        L.Control.FileLayerLoad().addTo(map);
+
+        /*
+        L.Control.fileLayerLoad({
+                    fitBounds: true,
+                    layerOptions: {style: style,
+                                   pointToLayer: function (data, latlng) {
+                                      return L.circleMarker(latlng, {style: style});
+                                   }},
+                }).addTo(map);*/
+
+            /**function listCoordenada(tipo, latlog) { }*/
+            function selectCoordenada(){
+                var c = map.getCenter();
+                switch (document.forms[0].listCoord.value)
+                {
+                case "2085":
+                    console.log(document.getElementById('mouseP').innerHTML = c.utm());
+                    break;
+                case "3795":
+                    console.log('3795');
+                    break;
+                case "2086":
+                    console.log('2086');
+                    break;
+                case "3796":
+                    console.log('3796');
+                    break;
+                default:
+                    console.log(document.getElementById('mouseP').innerHTML = c);            
+                };
+            }
+    
+        </script>
+</body>
+</html>

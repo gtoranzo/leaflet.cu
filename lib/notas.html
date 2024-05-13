@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+</head>
+<body>
+<div>
+    Servers:
+    <br>
+    <a href="http://10.11.1.133/geoserver/web/">
+    IDE Vida
+    ip 10.11.1.133:80</a>
+    <br>
+    <a href="https://oam.geocuba.cu/geoserver#/-79.5465087890625,21.570610571132665,7?_k=kmv0cv">
+    VANT
+    ip 10.11.1.140:80</a>
+</div>
+<script type="text/javascript">
+    // Coord
+    // import ControlCoordenadas from '../ControlCoordenadas/ControlCoordenadas'
+
+    const utm = e => {
+        // var selectBox = 'Guille'
+        var selectBox = '<select name="listCoord" id="leaflet-control-coordenadas"><option value="default">WGS84 EPSG:4632 Coordenadas geográficas</option><option value="2085">NAD27/Cuba Norte - EPSG:2085</option></select>'
+        document.getElementById("utmCoord").innerHTML = selectBox
+    }
+
+    <ControlCoordenadas position="bottomleft" id={"utmCoord"} />
+
+
+    const _onMouseMove = e => {
+        var newHtml =
+            'Lat: '+transformToDecimalDegrees(e.latlng.wrap().lat)+
+            ", "+
+            'Lon: '+transformToDecimalDegrees(e.latlng.wrap().lng)
+
+        var selectHtml = '<form><select name="ControlCoordenadas" id="ControlCoordenadas">'+
+            '<option value="default">WGS84 EPSG:4632 Coordenadas geográficas</option>'+
+            '<option value="2085">NAD27/Cuba Norte - EPSG:2085 UTM</option>'
+            '</select></form>'
+
+        switch (document.forms[0].ControlCoordenadas.value){
+            case "2085":
+                document.getElementById("mouseP").innerHTML = newHtml + 'guille'
+                break
+            default: document.getElementById("mouseP").innerHTML = newHtml
+        }
+    }
+</script>
+</body>
+</html>

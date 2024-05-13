@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Menu</title>
+    <!-- <script src="./leaflet/1.6/require.js" data-main="app"></script>  -->
+    <!-- <script src="./app.js" data-main="app"></script>    -->
+    
+    <link rel="stylesheet" href="./leaflet/1.6/leaflet.css" />
+    <link rel="stylesheet" href="./font-awesome/css/font-awesome.min.css" />
+    
+    <script src="./leaflet/1.6/leaflet-src.js"></script>
+    <script src="leaflet/1.6/leaflet.js"></script>
+    <script src="./proj4js/2.4.3/proj4.js"></script>
+    <script src="L.LatLng.UTM.js"></script>    
+    <script src="leaflet/1.6/leaflet.filelayer.js"></script>
+    <script src="./dist/leaflet.wms.js"></script>
+
+    <script src="plugin/easy-button.js"></script>       
+    <script src="fullscreen/Leaflet.fullscreen.min.js"></script>
+
+    <style>
+      
+        html { font-family: Helvetica, Verdana, Arial, sans-serif; }
+		body { height: 100%; padding: 0; margin: 0; }
+        #map { height: 100%; height: 800px; margin: 0;  padding: 0; z-index: 0;}
+       
+    </style>
+
+</head>
+
+<body>
+    <div id="map">
+    </div>
+   
+    <script type="text/javascript">
+        
+//function createMap(div, tiled) {
+        var options = {
+            attribution: '&copy; GEOCUBA',
+            subdomains: 'Cuba',
+            minZoom: 0,
+            maxZoom: 20
+        };
+        // https://tile.openstreetmap.org/{z}/{x}/{y}.png
+        var osm = L.tileLayer('https://mapas.geocuba.cu/osm_tiles/{z}/{x}/{y}.png', options);
+        var map = L.map('map', {layers: [osm], center: [21.741642, -82.578735], zoom: 10});
+    // Agregar capas WMS a la fuente 
+    var basemaps = {
+        'OSM': osm_tiles().addTo(map),
+        'Google Cache': googlecache(),
+        'OSM Geoserver': osmGeoserver()
+    };
+/*    var source = wms.source(
+        "https://idevida.geocuba.cu/geoserver/ij/wms?",
+        {
+            "format": "image/png",
+            "transparent": "true",
+            "attribution": "<a href='https://idevida.geocuba.cu/geoserver/web/'>Geoserver</a>",
+            "info_format": "text/html",
+            "tiled": tiled
+        }
+    );
+    var layers = {
+        'Manzanas': source.getLayer("ij:manzanas").addTo(map),
+        'Construcciones': source.getLayer("ij:cat_construcciones").addTo(map),
+        'Subparcelas': source.getLayer("ij:cat_subparcelas").addTo(map),
+        'Curvas nivel': source.getLayer("ij:curvas_nivel").addTo(map)
+    };
+  L.control.layers(basemaps, layers).addTo(map);*/
+    L.control.layers(basemaps).addTo(map);
+
+function osm_tiles() {
+    var attr = '';
+    return L.tileLayer("https://mapas.geocuba.cu/osm_tiles/{z}/{x}/{y}.png", {
+        opacity: 1,
+        attribution: attr
+    });
+}
+function googlecache() {
+    var attr = '';
+    return L.tileLayer.wms("https://idevida.geocuba.cu/geoserver/gmx/wms?",
+        {
+            version: "1.1.0",
+            request: "GetMap",
+            layers: "gmx:google",
+            srs: "EPSG:3857",
+            format: "image/png",
+            transparent: false,
+            attribution: attr
+        }
+    );
+}
+function osmGeoserver() {
+        var attr = '';
+        return L.tileLayer.wms("https://idevida.geocuba.cu/geoserver/osm/wms?", {
+            version: "1.1.0",
+            request: "GetMap",
+            layers: "osm:osm",
+            srs: "EPSG:4326",
+            format: "image/jpeg",
+            opacity: 1,
+            attribution: attr
+        });
+    }
+
+</script>
+</body>
+</html>
